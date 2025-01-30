@@ -1,4 +1,3 @@
-// cmd/main.go
 package main
 
 import (
@@ -18,39 +17,31 @@ import (
 )
 
 func main() {
-	// 1. Загрузка конфигурации
 	cfg := config.LoadConfig()
 	if cfg.TelegramBotToken == "" {
 		log.Fatal("TELEGRAM_BOT_TOKEN не задан")
 	}
 
-	// 2. Инициализация подключения к БД
 	db, err := initDB(cfg.DBDSN)
 	if err != nil {
 		log.Fatalf("Не удалось подключиться к БД: %v", err)
 	}
 	defer db.Close()
 
-	// 3. Инициализируем репозитории
 	userRepo := repository.NewUserRepository(db)
 	vpnRepo := repository.NewVPNKeyRepository(db)
 	payRepo := repository.NewPaymentRepository(db)
 
-	// 4. Инициализируем сервисы
-	//    Параметры shopID и secretKey передаются в сервис для запросов к YooKassa
 	userService := service.NewUserService(userRepo)
 	vpnService := service.NewVPNKeyService(vpnRepo)
 	paymentService := service.NewPaymentService(payRepo, vpnService, cfg.YooKassaShopID, cfg.YooKassaSecret)
 
-	// 5. Создаём экземпляр Telegram-бота
 	bot, err := tgbotapi.NewBotAPI(cfg.TelegramBotToken)
 	if err != nil {
 		log.Fatalf("Ошибка инициализации бота: %v", err)
 	}
 	bot.Debug = true
 
-	// 6. Регистрируем обработчики Telegram (Handlers)
-	// Допустим, вы вычисляете base64 для shopId:secretKey
 	encoded := base64.StdEncoding.EncodeToString([]byte(cfg.YooKassaShopID + ":" + cfg.YooKassaSecret))
 
 	tgHandler := telegram.NewHandler(
@@ -59,11 +50,10 @@ func main() {
 		vpnService,
 		paymentService,
 		cfg.AdminIDs,
-		"Basic "+encoded, // Здесь передаём сразу готовую строку
+		"Basic "+encoded,
 		[]byte(cfg.YooKassaSecret),
 	)
 
-	// 7. Запускаем отдельную горутину для вебхуков ЮKassa
 	go func() {
 		http.HandleFunc("/yookassa-webhook", tgHandler.HandleYooKassaWebhook)
 		addr := ":" + strconv.Itoa(cfg.Port)
@@ -71,7 +61,6 @@ func main() {
 		log.Fatal(http.ListenAndServe(addr, nil))
 	}()
 
-	// 8. Запускаем основной цикл обработки (polling) от Telegram
 	tgHandler.RunBot()
 }
 

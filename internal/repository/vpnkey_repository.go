@@ -64,7 +64,6 @@ func (r *vpnKeyRepositoryImpl) GetKeysByTelegramID(telegramID int64) ([]domain.V
 	return keys, nil
 }
 
-// vpnkey_repository.go
 func (r *vpnKeyRepositoryImpl) AddKey(key string) error {
 	query := `INSERT INTO vpn_keys (key, is_used) VALUES ($1, false)`
 	_, err := r.db.Exec(context.Background(), query, key)

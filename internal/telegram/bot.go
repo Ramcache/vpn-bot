@@ -44,8 +44,6 @@ func (h *Handler) IsAdmin(telegramID int64) bool {
 	return false
 }
 
-// internal/telegram/bot.go
-
 func (h *Handler) RunBot() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60

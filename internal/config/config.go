@@ -16,7 +16,6 @@ type Config struct {
 	YooKassaSecret   string
 	Port             int
 
-	// Список админов, чьи Telegram ID считаются "admin"
 	AdminIDs []int64
 }
 
@@ -28,7 +27,6 @@ func LoadConfig() *Config {
 		log.Fatalf("Ошибка чтения PORT: %v", err)
 	}
 
-	// Загружаем ADMIN_IDS, например "12345678,987654321"
 	adminIDsStr := getEnv("ADMIN_IDS", "")
 	adminIDs := parseAdminIDs(adminIDsStr)
 

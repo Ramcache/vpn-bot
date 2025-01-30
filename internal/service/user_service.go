@@ -15,13 +15,10 @@ func NewUserService(r repository.UserRepository) UserService {
 }
 
 func (s *userServiceImpl) RegisterUser(telegramID int64, username, chatLink string) error {
-	// Проверяем, есть ли уже пользователь
 	_, err := s.repo.GetByTelegramID(telegramID)
 	if err == nil {
-		// Пользователь существует — возвращаем без ошибок
 		return nil
 	}
-	// Создаём
 	err = s.repo.CreateUser(telegramID, username, chatLink)
 	if err != nil {
 		return err

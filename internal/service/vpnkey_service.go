@@ -16,7 +16,6 @@ func NewVPNKeyService(r repository.VPNKeyRepository) VPNKeyService {
 	return &vpnKeyServiceImpl{repo: r}
 }
 
-// Назначаем свободный ключ пользователю
 func (s *vpnKeyServiceImpl) AssignFreeKeyToUser(userID int) (string, error) {
 	key, err := s.repo.FindFreeKey()
 	if err != nil {
@@ -28,8 +27,7 @@ func (s *vpnKeyServiceImpl) AssignFreeKeyToUser(userID int) (string, error) {
 		return "", errors.New("нет свободных VPN-ключей")
 	}
 
-	// Привязываем ключ к пользователю
-	err = s.repo.AssignKeyToUser(key.ID, userID, time.Now().Add(30*24*time.Hour)) // 30 дней
+	err = s.repo.AssignKeyToUser(key.ID, userID, time.Now().Add(30*24*time.Hour))
 	if err != nil {
 		log.Println("❌ Ошибка при назначении VPN-ключа:", err)
 		return "", err
@@ -39,7 +37,6 @@ func (s *vpnKeyServiceImpl) AssignFreeKeyToUser(userID int) (string, error) {
 	return key.Key, nil
 }
 
-// Получаем ключи по TelegramID
 func (s *vpnKeyServiceImpl) GetKeysByUserTelegramID(telegramID int64) ([]domain.VPNKey, error) {
 	return s.repo.GetKeysByTelegramID(telegramID)
 }

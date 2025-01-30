@@ -17,12 +17,12 @@ func (h *Handler) handleMessage(update tgbotapi.Update) {
 		return
 	}
 
-	log.Printf("Получено сообщение: %s от %d", text, msg.From.ID) // Добавили лог
+	log.Printf("Получено сообщение: %s от %d", text, msg.From.ID)
 
 	if h.IsAdmin(msg.From.ID) {
-		log.Println("Пользователь является администратором") // Лог для проверки
+		log.Println("Пользователь является администратором")
 		if strings.HasPrefix(text, "/add_key ") {
-			log.Println("Обнаружена команда /add_key") // Лог перед вызовом
+			log.Println("Обнаружена команда /add_key")
 			h.handleAddKeyCommand(chatID, text)
 			return
 		}
@@ -154,7 +154,6 @@ func (h *Handler) sendMenuKeyboard(chatID int64) {
 }
 
 func (h *Handler) handleAddKeyCommand(chatID int64, text string) {
-	// text может быть "/add_key 12345-ABC-666..."
 	parts := splitBySpace(text)
 	if len(parts) < 2 {
 		h.bot.Send(tgbotapi.NewMessage(chatID, "Ошибка: нужно указать ключ. Пример: /add_key 12345"))
@@ -162,8 +161,6 @@ func (h *Handler) handleAddKeyCommand(chatID int64, text string) {
 	}
 	key := parts[1]
 
-	// Обращаемся к vpnKeyService. Можно сделать метод service.AddKey(...)
-	// Но здесь для простоты дернем repo напрямую (хотя по SOLID — лучше через сервис).
 	err := h.vpnKeyService.AddNewKey(key)
 	if err != nil {
 		h.bot.Send(tgbotapi.NewMessage(chatID, "Ошибка добавления ключа: "+err.Error()))
@@ -173,9 +170,7 @@ func (h *Handler) handleAddKeyCommand(chatID int64, text string) {
 }
 
 func splitBySpace(s string) []string {
-	// или strings.Fields(s)
-	// но Fields() режет по всем пробелам
-	// если нужно строго разделить по первому пробелу — можно сделать иначе
+
 	return strings.Split(s, " ")
 }
 
@@ -198,7 +193,6 @@ func (h *Handler) handleCallbackQuery(update tgbotapi.Update) {
 			return
 		}
 
-		// ✅ Проверяем наличие свободных VPN-ключей перед оплатой
 		hasKeys, err := h.vpnKeyService.HasFreeKeys()
 		if err != nil {
 			log.Println("❌ Ошибка проверки VPN-ключей:", err)
@@ -211,7 +205,6 @@ func (h *Handler) handleCallbackQuery(update tgbotapi.Update) {
 			return
 		}
 
-		// ✅ Если ключи есть — создаем ссылку на оплату
 		confirmationURL, err := h.paymentService.CreatePayment(user.ID, 299, "Покупка VPN")
 		if err != nil {
 			log.Println("❌ Ошибка создания платежа:", err)
@@ -219,7 +212,6 @@ func (h *Handler) handleCallbackQuery(update tgbotapi.Update) {
 			return
 		}
 
-		// Отправляем пользователю ссылку на оплату
 		h.sendMessageText(chatID, fmt.Sprintf("💳 Оплатите по ссылке: %s", confirmationURL))
 
 	case "my_keys":
@@ -283,7 +275,6 @@ func (h *Handler) handleCallbackQuery(update tgbotapi.Update) {
 		h.sendMessageText(chatID, "❓ Неизвестная команда.")
 	}
 
-	// ✅ Подтверждаем callback
 	callback := tgbotapi.NewCallback(cb.ID, "")
 	h.bot.Request(callback)
 }
@@ -298,8 +289,8 @@ func mainMenuKeyboard() tgbotapi.ReplyKeyboardMarkup {
 
 	return tgbotapi.ReplyKeyboardMarkup{
 		Keyboard:        buttons,
-		ResizeKeyboard:  true,  // Уменьшает кнопки, делая их удобными
-		OneTimeKeyboard: false, // Клавиатура не исчезает после нажатия
+		ResizeKeyboard:  true,
+		OneTimeKeyboard: false,
 	}
 }
 
@@ -312,7 +303,6 @@ func (h *Handler) handleBuyVPN(callback *tgbotapi.CallbackQuery) {
 		return
 	}
 
-	// Проверяем наличие свободных VPN-ключей
 	hasKeys, err := h.vpnKeyService.HasFreeKeys()
 	if err != nil {
 		log.Println("Ошибка проверки VPN-ключей:", err)
@@ -328,11 +318,10 @@ func (h *Handler) handleBuyVPN(callback *tgbotapi.CallbackQuery) {
 		return
 	}
 
-	// ✅ Если ключи есть — создаем ссылку на оплату
 	paymentURL, err := h.paymentService.CreatePayment(
-		int(userID),           // ID пользователя
-		299.00,                // Цена (например, 299 рублей)
-		"Оплата VPN-подписки", // Описание платежа
+		int(userID),
+		299.00,
+		"Оплата VPN-подписки",
 	)
 	if err != nil {
 		log.Println("Ошибка создания платежа:", err)
@@ -341,7 +330,6 @@ func (h *Handler) handleBuyVPN(callback *tgbotapi.CallbackQuery) {
 		return
 	}
 
-	// Отправляем ссылку на оплату пользователю
 	msg := tgbotapi.NewMessage(chatID, fmt.Sprintf("💳 Оплатите по ссылке: %s", paymentURL))
 	_, err = h.bot.Send(msg)
 	if err != nil {
